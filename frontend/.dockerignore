@@ -1,0 +1,36 @@
+# Git
+.git
+.gitignore
+.github
+
+# Node
+node_modules
+npm-debug.log
+yarn-error.log
+.npm
+.yarn/cache
+
+# Build
+dist
+build
+
+# IDE
+.vscode
+.idea
+*.swp
+
+# ENV
+.env
+.env.local
+
+# Backend (não precisa no frontend)
+backend/
+__pycache__
+
+# Documentação
+docs/
+
+# Other
+.DS_Store
+*.log
+Thumbs.db

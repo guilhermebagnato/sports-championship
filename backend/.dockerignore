@@ -1,0 +1,38 @@
+# Git
+.git
+.gitignore
+.github
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.ruff_cache
+
+# IDE
+.vscode
+.idea
+*.swp
+
+# ENV
+.env
+
+# Frontend (não precisa no backend)
+frontend/
+node_modules/
+
+# Documentação
+docs/
+
+# Other
+.DS_Store
+*.log
