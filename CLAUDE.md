@@ -14,7 +14,7 @@ High-integrity system for managing sports championships (leagues, tournaments, k
 The system core is isolated from IO and frameworks.
 - **Domain:** Pure entities (`User`, `Championship`, `Team`, `Player`, `Match`). No external dependencies.
 - **Application:** Use Cases and **Ports** (ABC Interfaces) for abstraction.
-- **Adapters:** 
+- **Adapters:**
   - **Repositories:** SQLModel/SQLAlchemy for persistence
   - **Controllers:** FastAPI routers with Pydantic schemas
   - **Auth:** JWT with python-jose, password hashing with pwdlib
@@ -29,7 +29,7 @@ The system core is isolated from IO and frameworks.
 ## 🛠️ Mandatory Principles
 
 1. **DDD (Domain-Driven Design):** Consistent ubiquitous language. Entities manage state, not tables. Use case = pure domain.
-2. **TDD (Test-Driven Development):** **Red-Green-Refactor** cycle. 
+2. **TDD (Test-Driven Development):** **Red-Green-Refactor** cycle.
    - **Prohibited:** Production code without corresponding test.
    - **Back:** `pytest` (pytest-asyncio for async), fixtures for DB, mocks for Auth.
    - **Front:** `Vitest` + `Testing Library`, behavior tests (user interactions).
@@ -94,15 +94,23 @@ The system core is isolated from IO and frameworks.
 
 ## Domain Glossary (Ubiquitous Language)
 
-- **Championship:** Competition (league, tournament, etc). Status: draft → active → completed
-- **Team:** Team within a Championship (context only, players participate directly)
-- **Player:** Entity that participates in a Championship, with rating (Elo)
-- **Match:** Meeting between 2 Players with result (draw, a_wins, b_wins) and rating update
-- **Rating:** Elo metric (default 1500), updated after each Match
-- **User:** Registered person (unique email, role: admin/player/organizer)
-- **DTO (Schema):** API contract (UserCreate, ChampionshipPublic, etc)
-- **Entity:** Domain object isolated from DB (contains no SQLAlchemy code)
-- **Repository:** Abstraction (Port) for persistence, implemented with SQLModel
+### Implemented Entities
+
+- **User:** Registered person in the system. Participant or administrator of championships.
+  - Fields: id (UUID), email (unique, indexed), full_name, hashed_password, is_active, created_at, updated_at
+  - Relationships: Can participate as Player in multiple Championships; can manage championships as organizer
+  - Constraints: Email unique, password hashed with pwdlib before storage
+  - Auth: JWT token via AuthService (python-jose), password verified with AuthService.verify_password()
+  - Storage: SQLModel User table, accessed via UserRepository (IUserRepository port)
+  - API: POST /api/auth/register (create), GET /api/auth/me (read authenticated)
+  - Status: ✅ Implemented (Phase 1), 🔄 Endpoints: register done, login/refresh TBD
+
+### Concepts
+
+- **DTO (Schema):** API contract (UserCreate, ChampionshipPublic, etc). Pydantic for validation + serialization
+- **Entity:** Domain object isolated from DB (contains no SQLAlchemy code). Pure Python classes
+- **Repository:** Abstraction (Port, ABC interface) for persistence, implemented with SQLModel adapter
+- **Port:** Interface (ABC) defining contract, e.g., IUserRepository, IAuthService. No implementation details
 
 ## Development Workflow (Red-Green-Refactor)
 
@@ -110,7 +118,6 @@ The system core is isolated from IO and frameworks.
 2. **Red Test:** Write failing test (assert response.status_code == 201, assert user.id is not None)
 3. **Green Implementation:** Code domain logic + repository until test passes
 4. **Refactoring:** Extract methods, improve names, maintain coverage
-
 ## Documentation Standards
 
 **Every new entity or business rule MUST update CLAUDE.md immediately. No exceptions.**
@@ -135,106 +142,106 @@ The system core is isolated from IO and frameworks.
 
 ## Running the Application
 
-### Backend
+**All commands must be executed with Docker Compose. No local setup required.**
+
+### Startup
 
 ```bash
-# Setup
-cd backend/
-poetry install                          # Install dependencies
-cp .env.example .env                    # Create .env (edit DATABASE_URL)
-python setup_db.py                      # Create tables and seed data
+# Start all services (backend + frontend + postgres)
+docker-compose up -d
 
-# Development
-unicorn app.main:app --reload          # Runs on http://localhost:8000
+# Verify all services are running
+docker-compose ps
 
-# Testing
-pytest                                  # All tests
-pytest tests/unit -v                    # Unit tests only
-pytest tests/integration -v             # Integration tests only
-pytest --cov=app --cov-report=html     # With coverage
-
-# Linting
-ruff check .                            # Lint
-ruff format .                           # Autoformat
-mypy app                                # Type checking
-safety check                            # Dependency vulnerabilities
-bandit -r app                           # Static security analysis
+# Seed database with initial data
+docker-compose exec backend python setup_db.py
 ```
 
-### Frontend
+### Development
 
 ```bash
-# Setup
-cd frontend/
-npm install                             # Install dependencies (Node 18+)
-cp .env.example .env.local              # VITE_API_URL configured
+# View real-time logs (all services)
+docker-compose logs -f
 
-# Development
-npm run dev                             # Vite dev server (http://localhost:5173)
-
-# Testing
-npm test                                # Vitest
-npm test -- --coverage                 # With coverage
-npm audit                               # Check vulnerabilities
-npm audit fix                           # Try to fix automatically
-
-# Build
-npm run build                           # Build for production
+# View logs for specific service
+docker-compose logs -f backend          # Backend logs
+docker-compose logs -f frontend         # Frontend logs
+docker-compose logs -f postgres         # Database logs
 ```
 
-### Both Simultaneously
+### Testing
 
 ```bash
-# Terminal 1
-cd backend/ && uvicorn app.main:app --reload
+# Run all backend tests
+docker-compose exec backend make test-backend
 
-# Terminal 2
-cd frontend/ && npm run dev
+# Run backend tests with coverage
+docker-compose exec backend make test-backend-coverage
 
-# Open http://localhost:5173 (frontend calls http://localhost:8000/api)
+# Run backend unit tests only
+docker-compose exec backend pytest tests/unit -v
+
+# Run backend integration tests only
+docker-compose exec backend pytest tests/integration -v
+
+# Run frontend tests
+docker-compose exec frontend npm test
+
+# Run frontend tests with coverage
+docker-compose exec frontend npm test -- --coverage
 ```
 
-### With Docker (Recommended for Development)
+### Code Quality
 
-**External Dependencies with Docker Compose:**
-
-The `docker-compose.yml` manages all external dependencies (PostgreSQL) and the application:
-
-1. **Run application + dependencies (recommended):**
 ```bash
-docker-compose up -d                    # Brings up backend + frontend + postgres
+# Backend linting, formatting and security
+docker-compose exec backend make lint-backend             # Lint
+docker-compose exec backend make lint-backend-security    # Security
+
+# Frontend vulnerability audit
+docker-compose exec frontend npm audit            # Check vulnerabilities
+docker-compose exec frontend npm audit fix        # Try to fix automatically
 ```
 
-2. **Run external dependencies only (without application):**
+### Database
+
 ```bash
-docker-compose up -d postgres           # PostgreSQL only
-# Then run backend/frontend locally
-cd backend && uvicorn app.main:app --reload
-cd frontend && npm run dev
+# Access PostgreSQL CLI
+docker-compose exec postgres psql -U sports_user -d sports_db
+
+# Seed data (populate with test data)
+docker-compose exec backend python setup_db.py
+
+# Reset database (remove all data)
+docker-compose down -v                  # Stop services and remove volumes
+docker-compose up -d                    # Start fresh
+docker-compose exec backend python setup_db.py
 ```
 
-3. **Add more external dependencies:**
-Extend the `docker-compose.yml` with Redis, ElasticSearch, etc as needed.
+### Maintenance
 
-**Common Commands:**
 ```bash
-# Real-time logs
-docker-compose logs -f                  # View all
-docker-compose logs -f backend          # Backend only
-docker-compose logs -f frontend         # Frontend only
-docker-compose logs -f postgres         # DB only
+# Stop all services
+docker-compose down
 
-# Execute commands inside containers
-docker-compose exec backend pytest      # Backend tests
-docker-compose exec backend python setup_db.py  # Initial seed
-docker-compose exec frontend npm test   # Frontend tests
+# Stop and remove all volumes (clean slate)
+docker-compose down -v
 
-# Stop containers
-docker-compose down                     # Stop all
-docker-compose down -v                  # Stop and remove volumes (clean DB)
+# Rebuild images (if Dockerfile changes)
+docker-compose up -d --build
 
-# Access
-Backend:  http://localhost:8000/docs
-Frontend: http://localhost:5173
-Postgres: localhost:5432 (user: sports_user, pass: sports_pass)
+# View full service status
+docker-compose ps
+
+# Execute arbitrary commands in containers
+docker-compose exec backend <command>
+docker-compose exec frontend <command>
+```
+
+### Access
+
+```
+Frontend:  http://localhost:5173
+Backend:   http://localhost:8000/docs
+Postgres:  localhost:5432 (user: sports_user, password: sports_pass, db: sports_db)
 ```

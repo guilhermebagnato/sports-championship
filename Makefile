@@ -19,21 +19,21 @@ setup: setup-backend setup-frontend ## Setup completo (Backend + Frontend)
 
 setup-backend: ## Setup do Backend (Poetry install + .env)
 	@echo "$(BLUE)Instalando dependências do Backend...$(NC)"
-	cd backend && poetry install
+	poetry install
 	@echo "$(BLUE)Criando arquivo .env...$(NC)"
 	@if [ ! -f backend/.env ]; then cp backend/.env.example backend/.env; echo "arquivo .env criado em backend/"; fi
 	@echo "$(GREEN)✓ Backend setup concluído$(NC)"
 
 setup-frontend: ## Setup do Frontend (npm install + .env)
 	@echo "$(BLUE)Instalando dependências do Frontend...$(NC)"
-	cd frontend && npm install
+	npm install
 	@echo "$(BLUE)Criando arquivo .env.local...$(NC)"
 	@if [ ! -f frontend/.env.local ]; then cp frontend/.env.example frontend/.env.local; echo "arquivo .env.local criado em frontend/"; fi
 	@echo "$(GREEN)✓ Frontend setup concluído$(NC)"
 
 db-seed: ## Cria tabelas e popula banco de dados com dados seed
 	@echo "$(BLUE)Criando banco de dados e inserindo dados seed...$(NC)"
-	cd backend && python setup_db.py
+	python setup_db.py
 	@echo "$(GREEN)✓ Banco de dados inicializado$(NC)"
 
 # ============================================
@@ -46,17 +46,17 @@ dev: ## Executa Backend e Frontend simultaneamente (em paralelo)
 	@echo "Frontend: http://localhost:5173"
 	@echo "Docs API: http://localhost:8000/docs"
 	@echo ""
-	@(cd backend && uvicorn app.main:app --reload) & \
-	(cd frontend && npm run dev) & \
+	@(uvicorn app.main:app --reload) & \
+	(npm run dev) & \
 	wait
 
 dev-backend: ## Executa Backend (uvicorn com reload)
 	@echo "$(BLUE)Iniciando Backend em http://localhost:8000$(NC)"
-	cd backend && uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+	uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 dev-frontend: ## Executa Frontend (Vite dev server)
 	@echo "$(BLUE)Iniciando Frontend em http://localhost:5173$(NC)"
-	cd frontend && npm run dev
+	npm run dev
 
 # ============================================
 # TESTES
@@ -66,20 +66,20 @@ test: test-backend test-frontend ## Executa todos os testes (Backend + Frontend)
 
 test-backend: ## Testes do Backend (pytest)
 	@echo "$(BLUE)Executando testes do Backend...$(NC)"
-	cd backend && pytest -v
+	pytest -v
 
 test-backend-coverage: ## Testes do Backend com cobertura
 	@echo "$(BLUE)Executando testes do Backend com cobertura...$(NC)"
-	cd backend && pytest --cov=app --cov-report=html --cov-report=term-missing
+	pytest --cov=app --cov-report=html --cov-report=term-missing
 	@echo "Relatório gerado em backend/htmlcov/index.html"
 
 test-frontend: ## Testes do Frontend (Vitest)
 	@echo "$(BLUE)Executando testes do Frontend...$(NC)"
-	cd frontend && npm test
+	npm test
 
 test-frontend-coverage: ## Testes do Frontend com cobertura
 	@echo "$(BLUE)Executando testes do Frontend com cobertura...$(NC)"
-	cd frontend && npm test -- --coverage
+	npm test -- --coverage
 
 # ============================================
 # LINTING & CODE QUALITY
@@ -89,30 +89,25 @@ lint: lint-backend lint-frontend ## Executa linting em Backend e Frontend
 
 lint-backend: ## Linting do Backend (ruff + mypy + security checks)
 	@echo "$(BLUE)Linting Backend...$(NC)"
-	cd backend && ruff check .
+	ruff check . --fix
 	@echo "$(BLUE)Type checking Backend...$(NC)"
-	cd backend && mypy app
+	mypy app
 	@echo "$(BLUE)Verificando dependências Backend...$(NC)"
-	cd backend && safety check
+	-safety check
 	@echo "$(GREEN)✓ Backend lint concluído$(NC)"
-
-lint-backend-fix: ## Autofix linting do Backend (ruff format)
-	@echo "$(BLUE)Formatando código Backend...$(NC)"
-	cd backend && ruff format . && ruff check . --fix
-	@echo "$(GREEN)✓ Backend formatado$(NC)"
 
 lint-backend-security: ## Análise de segurança do Backend (bandit)
 	@echo "$(BLUE)Análise de segurança Backend...$(NC)"
-	cd backend && bandit -r app --format json > security-report.json || true
+	bandit -r app --format json > security-report.json || true
 	@echo "Relatório gerado em backend/security-report.json"
 
 lint-frontend: ## Linting do Frontend (npm audit)
 	@echo "$(BLUE)Verificando vulnerabilidades Frontend...$(NC)"
-	cd frontend && npm audit
+	npm audit
 
 lint-frontend-fix: ## Fix automático de vulnerabilidades Frontend
 	@echo "$(BLUE)Corrigindo vulnerabilidades Frontend...$(NC)"
-	cd frontend && npm audit fix
+	npm audit fix
 
 # ============================================
 # BUILD
@@ -122,12 +117,12 @@ build: build-backend build-frontend ## Prepara aplicação para produção
 
 build-backend: ## Build do Backend (validações)
 	@echo "$(BLUE)Validando Backend para produção...$(NC)"
-	cd backend && ruff check . && mypy app
+	ruff check . && mypy app
 	@echo "$(GREEN)✓ Backend validado$(NC)"
 
 build-frontend: ## Build do Frontend (otimizado)
 	@echo "$(BLUE)Building Frontend...$(NC)"
-	cd frontend && npm run build
+	npm run build
 	@echo "$(GREEN)✓ Frontend built em frontend/dist/$(NC)"
 
 # ============================================
@@ -184,7 +179,7 @@ clean-deep: clean docker-down-volumes ## Limpeza profunda (limpa tudo incluindo 
 # ============================================
 
 install-pre-commit: ## Instala git hooks para pre-commit
-	cd backend && pip install pre-commit
+	pip install pre-commit
 	pre-commit install
 
 status: ## Exibe status de execução (containers e processos)

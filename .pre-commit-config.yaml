@@ -1,0 +1,45 @@
+# Pre-commit hooks configuration
+# Install: pip install pre-commit
+# Setup: pre-commit install
+# Run manually: pre-commit run --all-files
+#
+# This configuration minimizes external dependencies by delegating linting
+# and code quality checks to Makefile commands where possible.
+
+repos:
+  # General file checks (no external deps needed)
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: debug-statements
+      - id: detect-private-key
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+
+  # Backend linting via Makefile (ruff + mypy + safety)
+  - repo: local
+    hooks:
+      - id: make-lint-backend
+        name: Makefile lint-backend
+        entry: bash -c 'cd backend && make lint-backend'
+        language: system
+        types: [python]
+        pass_filenames: false
+        stages: [commit]
+
+  # Backend security via Makefile (bandit)
+  - repo: local
+    hooks:
+      - id: make-lint-backend-security
+        name: Makefile lint-backend-security
+        entry: bash -c 'cd backend && make lint-backend-security'
+        language: system
+        files: ^backend/app/
+        types: [python]
+        pass_filenames: false
+        stages: [commit]
