@@ -58,7 +58,7 @@ The system core is isolated from IO and frameworks.
 │   │   └── integration/      # end-to-end API tests
 │   ├── database.py           # create_engine, get_session, SessionDep
 │   ├── setup_db.py           # Seed script (5 users, 3 championships)
-│   ├── .env.example          # DATABASE_URL, SECRET_KEY, ALGORITHM, etc
+│   ├── .env.example          # POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB, SECRET_KEY, ALGORITHM, etc
 │   ├── Dockerfile            # Docker image for backend (Python 3.13)
 │   ├── docker-compose.yml    # Orchestration for backend + postgres
 │   ├── requirements.txt      # poetry install (execute poetry.lock)
@@ -148,94 +148,94 @@ The system core is isolated from IO and frameworks.
 
 ```bash
 # Start all services (backend + frontend + postgres)
-docker-compose up -d
+docker compose up -d
 
 # Verify all services are running
-docker-compose ps
+docker compose ps
 
 # Seed database with initial data
-docker-compose exec backend python setup_db.py
+docker compose exec backend python setup_db.py
 ```
 
 ### Development
 
 ```bash
 # View real-time logs (all services)
-docker-compose logs -f
+docker compose logs -f
 
 # View logs for specific service
-docker-compose logs -f backend          # Backend logs
-docker-compose logs -f frontend         # Frontend logs
-docker-compose logs -f postgres         # Database logs
+docker compose logs -f backend          # Backend logs
+docker compose logs -f frontend         # Frontend logs
+docker compose logs -f postgres         # Database logs
 ```
 
 ### Testing
 
 ```bash
 # Run all backend tests
-docker-compose exec backend make test-backend
+docker compose exec backend make test-backend
 
 # Run backend tests with coverage
-docker-compose exec backend make test-backend-coverage
+docker compose exec backend make test-backend-coverage
 
 # Run backend unit tests only
-docker-compose exec backend pytest tests/unit -v
+docker compose exec backend pytest tests/unit -v
 
 # Run backend integration tests only
-docker-compose exec backend pytest tests/integration -v
+docker compose exec backend pytest tests/integration -v
 
 # Run frontend tests
-docker-compose exec frontend npm test
+docker compose exec frontend npm test
 
 # Run frontend tests with coverage
-docker-compose exec frontend npm test -- --coverage
+docker compose exec frontend npm test -- --coverage
 ```
 
 ### Code Quality
 
 ```bash
 # Backend linting, formatting and security
-docker-compose exec backend make lint-backend             # Lint
-docker-compose exec backend make lint-backend-security    # Security
+docker compose exec backend make lint-backend             # Lint
+docker compose exec backend make lint-backend-security    # Security
 
 # Frontend vulnerability audit
-docker-compose exec frontend npm audit            # Check vulnerabilities
-docker-compose exec frontend npm audit fix        # Try to fix automatically
+docker compose exec frontend npm audit            # Check vulnerabilities
+docker compose exec frontend npm audit fix        # Try to fix automatically
 ```
 
 ### Database
 
 ```bash
 # Access PostgreSQL CLI
-docker-compose exec postgres psql -U sports_user -d sports_db
+docker compose exec postgres psql -U sports_user -d sports_db
 
 # Seed data (populate with test data)
-docker-compose exec backend python setup_db.py
+docker compose exec backend python setup_db.py
 
 # Reset database (remove all data)
-docker-compose down -v                  # Stop services and remove volumes
-docker-compose up -d                    # Start fresh
-docker-compose exec backend python setup_db.py
+docker compose down -v                  # Stop services and remove volumes
+docker compose up -d                    # Start fresh
+docker compose exec backend python setup_db.py
 ```
 
 ### Maintenance
 
 ```bash
 # Stop all services
-docker-compose down
+docker compose down
 
 # Stop and remove all volumes (clean slate)
-docker-compose down -v
+docker compose down -v
 
 # Rebuild images (if Dockerfile changes)
-docker-compose up -d --build
+docker compose up -d --build
 
 # View full service status
-docker-compose ps
+docker compose ps
 
 # Execute arbitrary commands in containers
-docker-compose exec backend <command>
-docker-compose exec frontend <command>
+docker compose exec backend <command>
+docker compose exec frontend <command>
 ```
 
 ### Access

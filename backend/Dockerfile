@@ -1,44 +1,33 @@
 # ============================================
-# STAGE 1: Builder
+# Single Stage Build
 # ============================================
-FROM python:3.13-slim as builder
+FROM python:3.11-slim
 
-WORKDIR /tmp
+WORKDIR /app
 
-# Instalar dependências de build
+# Instalar dependências de build e runtime
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     curl \
+    postgresql-client \
+    make \
     && rm -rf /var/lib/apt/lists/*
+
+RUN pip install pbr setuptools
 
 # Instalar Poetry
 RUN curl -sSL https://install.python-poetry.org | python3 - \
     && ln -s /root/.local/bin/poetry /usr/local/bin/poetry
 
-# Copiar apenas poetry files
-COPY pyproject.toml poetry.lock ./
+# Copiar poetry files
+COPY pyproject.toml* ./
 
 # Criar ambiente virtual e instalar dependências
 RUN poetry config virtualenvs.in-project true
-RUN poetry install --no-dev --no-interaction --no-ansi
+RUN poetry install --no-interaction --no-ansi
 
-# ============================================
-# STAGE 2: Runtime
-# ============================================
-FROM python:3.13-slim
-
-WORKDIR /app
-
-# Instalar apenas dependências de runtime
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    postgresql-client \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copiar ambiente virtual do builder
-COPY --from=builder /tmp/.venv /app/.venv
-
-# Copiar código-fonte
-COPY . .
+# Copiar código-fonte (apenas backend/app)
+COPY app ./app
 
 # Ativar venv
 ENV PATH="/app/.venv/bin:$PATH"
@@ -47,10 +36,10 @@ ENV PYTHONDONTWRITEBYTECODE=1
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:8000/health')" || exit 1
+    CMD /app/.venv/bin/python -c "import requests; requests.get('http://localhost:8000/api/health')" || exit 1
 
 # Expor porta
 EXPOSE 8000
 
 # Comando padrão
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["/app/.venv/bin/uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

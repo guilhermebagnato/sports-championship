@@ -26,14 +26,14 @@ fi
 # Atualizar .env com a nova SECRET_KEY (se openssl instalado)
 if command -v sed &> /dev/null; then
     echo "Atualizando .env com SECRET_KEY..."
-    
+
     # macOS precisa de -i ''
     if [[ "$OSTYPE" == "darwin"* ]]; then
         sed -i '' "s/your-super-secret-key-change-this-in-production-with-something-long-and-random/$SECRET_KEY/" .env
     else
         sed -i "s/your-super-secret-key-change-this-in-production-with-something-long-and-random/$SECRET_KEY/" .env
     fi
-    
+
     echo "✅ Arquivo .env atualizado"
 fi
 

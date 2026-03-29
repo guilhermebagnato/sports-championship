@@ -50,7 +50,7 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app
-      - ./Makefile:/app/Makefile
+      - ./backend/Makefile:/app/Makefile
       - /app/.venv
     depends_on:
       postgres:
@@ -65,34 +65,6 @@ services:
       - sports-network
     restart: unless-stopped
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-
-  # ============================================
-  # Frontend (Vite Dev Server)
-  # ============================================
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: sports-frontend
-    environment:
-      VITE_API_URL: ${VITE_API_URL:-http://localhost:8000/api}
-      NODE_ENV: development
-    ports:
-      - "5173:5173"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    depends_on:
-      - backend
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5173/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 15s
-    networks:
-      - sports-network
-    restart: unless-stopped
 
   # ============================================
   # Optional: pgAdmin (Database UI)
