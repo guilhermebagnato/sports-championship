@@ -44,7 +44,9 @@ class TestUserRegistration:
 
         assert response.status_code == 422  # Validation error from Pydantic
 
-    def test_register_user_duplicate_email(self, client: TestClient, test_user_in_db) -> None:
+    def test_register_user_duplicate_email(
+        self, client: TestClient, test_user_in_db
+    ) -> None:
         """Test registration with existing email.
 
         Scenario: POST /api/auth/register with email already in database

@@ -49,4 +49,6 @@ class User:
 
     def __repr__(self) -> str:
         """String representation of User."""
-        return f"User(id={self.id!r}, email={self.email!r}, full_name={self.full_name!r})"
+        return (
+            f"User(id={self.id!r}, email={self.email!r}, full_name={self.full_name!r})"
+        )

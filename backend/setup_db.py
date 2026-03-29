@@ -4,6 +4,7 @@ Database initialization and seed data script.
 This script creates tables and populates initial data for development/testing.
 To be run after database connection is verified.
 """
+
 import logging
 
 from sqlmodel import SQLModel

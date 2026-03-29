@@ -7,7 +7,9 @@ from app.adapters.routers import auth, health
 from app.database import create_db_and_tables
 
 # CORS configuration
-CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:5173").split(",")
+CORS_ORIGINS = os.getenv(
+    "CORS_ORIGINS", "http://localhost:3000,http://localhost:5173"
+).split(",")
 
 # Create FastAPI app
 app = FastAPI(

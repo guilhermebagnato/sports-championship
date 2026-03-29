@@ -140,49 +140,33 @@ The system core is isolated from IO and frameworks.
 
 **Owner:** Every developer updating domain logic is responsible for keeping documentation synchronized.
 
-## Running the Application
-
-**All commands must be executed with Docker Compose. No local setup required.**
-
 ### Startup
 
 ```bash
 # Start all services (backend + frontend + postgres)
-docker compose up -d
+docker compose up -d --build
 
 # Verify all services are running
 docker compose ps
 
 # Seed database with initial data
-docker compose exec backend python setup_db.py
-```
-
-### Development
-
-```bash
-# View real-time logs (all services)
-docker compose logs -f
-
-# View logs for specific service
-docker compose logs -f backend          # Backend logs
-docker compose logs -f frontend         # Frontend logs
-docker compose logs -f postgres         # Database logs
+python setup_db.py
 ```
 
 ### Testing
 
 ```bash
 # Run all backend tests
-docker compose exec backend make test-backend
+make test-backend
 
 # Run backend tests with coverage
-docker compose exec backend make test-backend-coverage
+make test-backend-coverage
 
 # Run backend unit tests only
-docker compose exec backend pytest tests/unit -v
+pytest tests/unit -v
 
 # Run backend integration tests only
-docker compose exec backend pytest tests/integration -v
+pytest tests/integration -v
 
 # Run frontend tests
 docker compose exec frontend npm test
@@ -195,8 +179,8 @@ docker compose exec frontend npm test -- --coverage
 
 ```bash
 # Backend linting, formatting and security
-docker compose exec backend make lint-backend             # Lint
-docker compose exec backend make lint-backend-security    # Security
+make lint-backend             # Lint
+make lint-backend-security    # Security
 
 # Frontend vulnerability audit
 docker compose exec frontend npm audit            # Check vulnerabilities
@@ -210,12 +194,12 @@ docker compose exec frontend npm audit fix        # Try to fix automatically
 docker compose exec postgres psql -U sports_user -d sports_db
 
 # Seed data (populate with test data)
-docker compose exec backend python setup_db.py
+python setup_db.py
 
 # Reset database (remove all data)
 docker compose down -v                  # Stop services and remove volumes
 docker compose up -d                    # Start fresh
-docker compose exec backend python setup_db.py
+python setup_db.py
 ```
 
 ### Maintenance

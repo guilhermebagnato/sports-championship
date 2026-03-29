@@ -11,7 +11,9 @@ class TestUserRegistration:
     """Test suite for user registration logic."""
 
     @pytest.mark.asyncio
-    async def test_create_user_with_hashed_password(self, session, auth_service: AuthService) -> None:
+    async def test_create_user_with_hashed_password(
+        self, session, auth_service: AuthService
+    ) -> None:
         """Test creating a user with hashed password.
 
         User password should be hashed before storage.
@@ -41,7 +43,9 @@ class TestUserRegistration:
         assert is_valid is True
 
     @pytest.mark.asyncio
-    async def test_prevent_duplicate_email(self, session, test_user_in_db, auth_service: AuthService) -> None:
+    async def test_prevent_duplicate_email(
+        self, session, test_user_in_db, auth_service: AuthService
+    ) -> None:
         """Test that duplicate email registration is prevented.
 
         Second user with same email should fail.

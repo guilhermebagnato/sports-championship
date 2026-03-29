@@ -54,7 +54,9 @@ class AuthService(IAuthService):
         except Exception:
             return False
 
-    def create_access_token(self, user_id: str, expires_delta: int | None = None) -> str:
+    def create_access_token(
+        self, user_id: str, expires_delta: int | None = None
+    ) -> str:
         """Create JWT access token for user.
 
         Args:

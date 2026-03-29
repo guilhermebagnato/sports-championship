@@ -1,4 +1,5 @@
 """Pytest Configuration and Fixtures."""
+
 from collections.abc import Generator
 
 import pytest
@@ -80,7 +81,9 @@ def test_user_entity_fixture() -> UserEntity:
 
 
 @pytest.fixture(name="test_user_in_db")
-async def test_user_in_db_fixture(session: Session, test_user_entity: UserEntity) -> UserEntity:
+async def test_user_in_db_fixture(
+    session: Session, test_user_entity: UserEntity
+) -> UserEntity:
     """Create and persist a test user."""
     repository = UserRepository(session)
     user = await repository.create(test_user_entity)

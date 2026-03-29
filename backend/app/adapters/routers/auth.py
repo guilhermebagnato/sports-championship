@@ -1,4 +1,5 @@
 """Authentication router."""
+
 from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException, status
@@ -10,7 +11,9 @@ from app.domain.entities import User as UserEntity
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
-@router.post("/register", response_model=UserPublic, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/register", response_model=UserPublic, status_code=status.HTTP_201_CREATED
+)
 async def register(
     user_create: UserCreate,
     auth_service: AuthServiceDep,

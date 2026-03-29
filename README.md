@@ -48,7 +48,7 @@ git clone <repo-url>
 cd sports-championship
 
 # Start containers
-docker-compose up -d
+docker-compose up -d --build
 
 # Application ready at:
 # Frontend:  http://localhost:5173
@@ -64,12 +64,11 @@ docker-compose up -d
 cd backend/
 
 # Setup
-poetry install
-cp .env.example .env
-python setup_db.py
+make setup-backend
+make db-seed
 
 # Development
-uvicorn app.main:app --reload
+make dev-backend
 ```
 
 Backend running on `http://localhost:8000`
@@ -97,7 +96,7 @@ Frontend running on `http://localhost:5173`
 cd backend/
 
 # All tests
-pytest
+make test-backend
 
 # Unit tests only
 pytest tests/unit -v
@@ -106,7 +105,7 @@ pytest tests/unit -v
 pytest tests/integration -v
 
 # With code coverage
-pytest --cov=app --cov-report=html
+make test-backend-coverage
 ```
 
 ### Frontend

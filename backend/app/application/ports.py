@@ -1,4 +1,5 @@
 """Application Layer: Ports (Abstract Base Classes)."""
+
 from abc import ABC, abstractmethod
 
 from app.domain.entities import User
@@ -48,7 +49,9 @@ class IAuthService(ABC):
         pass
 
     @abstractmethod
-    def create_access_token(self, user_id: str, expires_delta: int | None = None) -> str:
+    def create_access_token(
+        self, user_id: str, expires_delta: int | None = None
+    ) -> str:
         """Create JWT access token for user."""
         pass
 
