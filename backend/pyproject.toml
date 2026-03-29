@@ -14,7 +14,7 @@ uvicorn = "0.24.0"
 sqlmodel = "0.0.14"
 sqlalchemy = "2.0.23"
 psycopg2-binary = "2.9.9"
-pydantic = "2.12.5"
+pydantic = {version = "2.12.5", extras = ["email"]}
 pydantic-settings = "2.1.0"
 python-jose = {version = "3.3.0", extras = ["cryptography"]}
 passlib = "1.7.4"
