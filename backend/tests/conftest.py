@@ -69,13 +69,17 @@ def auth_service_fixture() -> AuthService:
 
 
 @pytest.fixture(name="test_user_entity")
-def test_user_entity_fixture() -> UserEntity:
-    """Create a test user entity."""
+def test_user_entity_fixture(auth_service: AuthService) -> UserEntity:
+    """Create a test user entity.
+
+    Password is 'password123'.
+    """
+    hashed = auth_service.hash_password("password123")
     return UserEntity(
         id="test-user-1",
         email="test@example.com",
         full_name="Test User",
-        hashed_password="$2b$12$hashedpassword",
+        hashed_password=hashed,
         is_active=True,
     )
 

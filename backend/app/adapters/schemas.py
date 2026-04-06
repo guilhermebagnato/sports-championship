@@ -26,3 +26,17 @@ class UserInDB(UserPublic):
     hashed_password: str
     is_active: bool
     updated_at: datetime
+
+
+class Token(BaseModel):
+    """DTO for JWT access token."""
+
+    access_token: str
+    token_type: str = "bearer"
+
+
+class LoginRequest(BaseModel):
+    """DTO for login request."""
+
+    email: EmailStr
+    password: str

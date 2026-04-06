@@ -61,7 +61,6 @@ The system core is isolated from IO and frameworks.
     -   **Database Transactions:** Ensure that units of work involving multiple writes are wrapped in transactions. Use the `SessionDep` dependency for managed life-cycles.
     -   **Schema Strictness:** Never return database models directly from the API. Always use Pydantic `Public` schemas to filter sensitive data and define the contract.
     -   **Dependency Injection:** Leverage FastAPI's `Depends` for all cross-cutting concerns (Auth, DB Sessions, Service registration) to facilitate testing and decoupling.
-7.  **Exact Versioning:** Dependencies must be locked with exact versions in `poetry.lock` and `package-lock.json`, without the use of `~` or `^` in production environments.
 
 ## Folder Structure
 
@@ -122,14 +121,7 @@ The system core is isolated from IO and frameworks.
 
 ### Implemented Entities
 
-- **User:** Registered person in the system. Participant or administrator of championships.
-  - Fields: id (UUID), email (unique, indexed), full_name, hashed_password, is_active, created_at, updated_at
-  - Relationships: Can participate as Player in multiple Championships; can manage championships as organizer
-  - Constraints: Email unique, password hashed with pwdlib before storage
-  - Auth: JWT token via AuthService (python-jose), password verified with AuthService.verify_password()
-  - Storage: SQLModel User table, accessed via UserRepository (IUserRepository port)
-  - API: POST /api/auth/register (create), GET /api/auth/me (read authenticated)
-  - Status: ✅ Implemented (Phase 1), 🔄 Endpoints: register done, login/refresh TBD
+**User:** Registered person in the system. Participant or administrator of championships.
 
 ### Concepts
 

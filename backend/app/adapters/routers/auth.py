@@ -4,7 +4,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException, status
 
-from app.adapters.schemas import UserCreate, UserPublic
+from app.adapters.schemas import LoginRequest, Token, UserCreate, UserPublic
 from app.dependencies import AuthServiceDep, RepositoryDep
 from app.domain.entities import User as UserEntity
 
@@ -64,6 +64,46 @@ async def register(
     )
 
 
+@router.post("/token", response_model=Token)
+async def login(
+    login_data: LoginRequest,
+    auth_service: AuthServiceDep,
+    repository: RepositoryDep,
+) -> Token:
+    """Login to get access token.
+
+    Args:
+        login_data: Login credentials (email, password)
+        auth_service: Service for password verification and JWT operations
+        repository: Repository for user retrieval
+
+    Returns:
+        Token with access_token and token_type
+
+    Raises:
+        HTTPException 401: If invalid credentials
+    """
+    user = await repository.get_by_email(login_data.email)
+    if user is None or not auth_service.verify_password(
+        login_data.password, user.hashed_password
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # Check if user is active
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User account is disabled",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    access_token = auth_service.create_access_token(user_id=user.id)
+    return Token(access_token=access_token)
+
+
 # TODO: Implement in Phase 2
-# POST /token (login)
 # POST /refresh (refresh token)
