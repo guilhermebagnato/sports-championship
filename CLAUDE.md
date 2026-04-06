@@ -28,14 +28,40 @@ The system core is isolated from IO and frameworks.
 
 ## 🛠️ Mandatory Principles
 
-1. **DDD (Domain-Driven Design):** Consistent ubiquitous language. Entities manage state, not tables. Use case = pure domain.
-2. **TDD (Test-Driven Development):** **Red-Green-Refactor** cycle.
-   - **Prohibited:** Production code without corresponding test.
-   - **Back:** `pytest` (pytest-asyncio for async), fixtures for DB, mocks for Auth.
-   - **Front:** `Vitest` + `Testing Library`, behavior tests (user interactions).
-3. **Clean Code:** SRP, semantic names, strong TypeScript types, zero obvious comments.
-4. **Layer Isolation:** Domain doesn't access DB directly, Pydantic schemas isolate DTO from Entity, API client isolated in `services/`.
-5. **Exact Versioning:** Locked dependencies in `poetry.lock` and `package-lock.json`, no `~` or `^` in production.
+1.  **DDD (Domain-Driven Design):**
+    -   **Rich Domain:** Entities (e.g., `Championship`, `Match`) must encapsulate business logic and state transitions, not just hold data.
+    -   **Value Objects:** Use for descriptive attributes (e.g., `Email`, `Score`) that don't have an identity but have validation logic.
+    -   **Aggregates:** Group related entities that must be treated as a single unit for data changes (e.g., a `Match` and its `Events`).
+    -   **Ubiquitous Language:** Use the same terminology in code (classes, variables), documentation, and communication.
+2.  **TDD (Test-Driven Development):**
+    -   **Red:** Start with a failing test that defines the expected behavior of a new feature or fix.
+    -   **Green:** Write the minimum code required to make the test pass.
+    -   **Refactor:** Clean up the code while ensuring tests remain green.
+    -   **Mocking:** Use mocks for external dependencies (database, external APIs) in unit tests. Integration tests should use a real test database.
+3.  **Clean Code:**
+    -   **Meaningful Names:** Variables, functions, and classes must reveal intent (e.g., `calculate_group_standings` vs `calc_std`).
+    -   **Small Functions:** Functions should do one thing and do it well (SRP). Use a maximum of 20-30 lines as a guideline.
+    -   **DRY (Don't Repeat Yourself):** Abstract common logic to prevent duplication.
+    -   **YAGNI (You Ain't Gonna Need It):** Don't implement features or abstractions until they are actually needed.
+4.  **Hexagonal Architecture (Ports & Adapters):**
+    -   **Core (Domain):** The heart of the app, containing business rules, independent of any framework or database.
+    -   **Application (Use Cases):** Orchestrates the flow of data to and from the domain.
+    -   **Ports (Interfaces):** Abstract definitions of what the application needs (e.g., `IUserRepository`).
+    -   **Adapters (Infrastructure):** Concrete implementations of ports (e.g., `SQLAlchemyUserRepository`, `FastAPIControllers`).
+    -   **Dependency Rule:** Dependencies always point inwards toward the Domain. The Domain never knows about the Database or API.
+5.  **SOLID Principles:**
+    -   **S - Single Responsibility:** A class should have one, and only one, reason to change (e.g., one service per use case).
+    -   **O - Open/Closed:** Entities should be open for extension (e.g., new championship types) but closed for modification.
+    -   **L - Liskov Substitution:** Subtypes must be substitutable for their base types (e.g., any `Repository` implementation must work the same).
+    -   **I - Interface Segregation:** Prefer many small, specific interfaces over one large, general-purpose one.
+    -   **D - Dependency Inversion:** Depend on abstractions (Ports), not on concrete implementations (Adapters). Use FastAPI's `Depends` for this.
+6.  **Backend Fundamentals (Strict Standards):**
+    -   **Async Consistency:** Use `async/await` for all I/O operations (database, API calls). Avoid blocking calls in the main event loop.
+    -   **Global Error Handling:** Implement custom domain exceptions and catch them in FastAPI global handlers to maintain consistent error response structures.
+    -   **Database Transactions:** Ensure that units of work involving multiple writes are wrapped in transactions. Use the `SessionDep` dependency for managed life-cycles.
+    -   **Schema Strictness:** Never return database models directly from the API. Always use Pydantic `Public` schemas to filter sensitive data and define the contract.
+    -   **Dependency Injection:** Leverage FastAPI's `Depends` for all cross-cutting concerns (Auth, DB Sessions, Service registration) to facilitate testing and decoupling.
+7.  **Exact Versioning:** Dependencies must be locked with exact versions in `poetry.lock` and `package-lock.json`, without the use of `~` or `^` in production environments.
 
 ## Folder Structure
 
@@ -114,22 +140,23 @@ The system core is isolated from IO and frameworks.
 
 ## Development Workflow (Red-Green-Refactor)
 
-1. **Contract:** Define Pydantic schema (request/response) in `adapters/schemas.py`
-2. **Red Test:** Write failing test (assert response.status_code == 201, assert user.id is not None)
-3. **Green Implementation:** Code domain logic + repository until test passes
-4. **Refactoring:** Extract methods, improve names, maintain coverage
+1.  **Contract:** Define Pydantic schema (request/response) in `adapters/schemas.py`
+2.  **Red Test:** Write failing test (assert response.status_code == 201, assert user.id is not None)
+3.  **Green Implementation:** Code domain logic + repository until test passes
+4.  **Refactoring:** Extract methods, improve names, maintain coverage
+
 ## Documentation Standards
 
 **Every new entity or business rule MUST update CLAUDE.md immediately. No exceptions.**
 
 ### When to Update CLAUDE.md
 
-1. **New Domain Entity:** Add to Domain Glossary with description and status transitions (if applicable)
-   - Format: `**EntityName:** Brief description. Status/Relationships.`
-2. **New Business Rule:** Document in the relevant architecture section (Backend/Frontend)
-3. **New API Route:** Update folder structure comment in Backend section if adding new router
-4. **New Dependency:** Update Tech Stack section with version
-5. **New Layer/Pattern:** Add to Mandatory Principles or Architecture sections
+1.  **New Domain Entity:** Add to Domain Glossary with description and status transitions (if applicable)
+    -   Format: `**EntityName:** Brief description. Status/Relationships.`
+2.  **New Business Rule:** Document in the relevant architecture section (Backend/Frontend)
+3.  **New API Route:** Update folder structure comment in Backend section if adding new router
+4.  **New Dependency:** Update Tech Stack section with version
+5.  **New Layer/Pattern:** Add to Mandatory Principles or Architecture sections
 
 ### Update Checklist
 - [ ] Entity added to Domain Glossary
