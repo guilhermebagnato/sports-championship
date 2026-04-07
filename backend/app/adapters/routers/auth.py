@@ -11,10 +11,38 @@ from app.adapters.schemas import (
     UserCreate,
     UserPublic,
 )
-from app.dependencies import AuthServiceDep, RepositoryDep
+from app.dependencies import AuthServiceDep, CurrentUserDep, RepositoryDep
 from app.domain.entities import User as UserEntity
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
+
+
+@router.get("/me", response_model=UserPublic)
+async def get_me(current_user: CurrentUserDep) -> UserPublic:
+    """Get current authenticated user's profile.
+
+    Args:
+        current_user: The user entity retrieved from the JWT token.
+
+    Returns:
+        UserPublic with user data.
+
+    Raises:
+        HTTPException 401: If token is invalid or user doesn't exist.
+    """
+    if current_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    return UserPublic(
+        id=current_user.id,
+        email=current_user.email,
+        full_name=current_user.full_name,
+        created_at=current_user.created_at,
+    )
 
 
 @router.post(
