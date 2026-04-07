@@ -1,5 +1,4 @@
-"""Pytest Configuration and Fixtures."""
-
+import os
 from collections.abc import Generator
 
 import pytest
@@ -11,6 +10,12 @@ from app.application.services import AuthService
 from app.database import get_session
 from app.domain.entities import User as UserEntity
 from app.main import app
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    """Set global test environment variables."""
+    os.environ["DATABASE_URL"] = "sqlite:///:memory:"
+
 
 # Test database URL (in-memory SQLite)
 TEST_DATABASE_URL = "sqlite:///:memory:"

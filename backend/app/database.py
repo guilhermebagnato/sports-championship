@@ -1,5 +1,6 @@
 import os
 from collections.abc import Generator
+from typing import Any
 
 from sqlmodel import Session, SQLModel, create_engine
 
@@ -20,22 +21,50 @@ def _build_database_url() -> str:
     )
 
 
-DATABASE_URL = _build_database_url()
+_engine = None
 
-# Create engine with connection pooling
-engine = create_engine(
-    DATABASE_URL,
-    echo=False,
-    future=True,
-    pool_pre_ping=True,  # Verify connections before using
-    pool_size=10,
-    max_overflow=20,
-)
+
+def get_engine() -> Any:
+    """Get or create the database engine (Lazy initialization).
+
+    Returns:
+        SQLModel engine instance
+    """
+    global _engine
+    if _engine is None:
+        database_url = _build_database_url()
+
+        # Connection pooling arguments (Postgres only)
+        connect_args = {}
+        engine_kwargs: dict[str, Any] = {
+            "echo": False,
+            "future": True,
+        }
+
+        if database_url.startswith("sqlite"):
+            connect_args["check_same_thread"] = False
+        else:
+            engine_kwargs.update(
+                {
+                    "pool_pre_ping": True,
+                    "pool_size": 10,
+                    "max_overflow": 20,
+                }
+            )
+
+        # Create engine
+        _engine = create_engine(
+            database_url,
+            connect_args=connect_args,
+            **engine_kwargs,
+        )
+
+    return _engine
 
 
 def create_db_and_tables() -> None:
     """Create all database tables."""
-    SQLModel.metadata.create_all(engine)
+    SQLModel.metadata.create_all(get_engine())
 
 
 def get_session() -> Generator[Session, None, None]:
@@ -44,5 +73,5 @@ def get_session() -> Generator[Session, None, None]:
     Yields:
         SQLModel Session for database operations
     """
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         yield session

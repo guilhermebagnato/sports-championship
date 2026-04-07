@@ -64,3 +64,23 @@ select = ["E", "F", "W", "I", "N", "UP", "S", "B"]
 
 [tool.ruff.isort]
 known-first-party = ["app"]
+
+[tool.coverage.run]
+source = ["app"]
+omit = [
+    "app/application/ports.py",
+    "setup_db.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "pass",
+    "\\.\\.\\.",
+    "abstractmethod",
+]
+show_missing = true
+skip_empty = true

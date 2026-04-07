@@ -1,3 +1,7 @@
+from datetime import UTC, datetime, timedelta
+
+from jose import jwt
+
 from app.application.services import AuthService
 
 
@@ -29,6 +33,10 @@ class TestAuthService:
         is_valid = auth_service.verify_password(wrong_password, hashed)
         assert is_valid is False
 
+    def test_verify_password_exception(self, auth_service: AuthService) -> None:
+        """Test password verification with invalid hash to trigger exception."""
+        assert auth_service.verify_password("any", "invalid-hash-format") is False
+
     def test_create_token(self, auth_service: AuthService) -> None:
         """Test JWT token creation."""
         user_id = "user-123"
@@ -50,6 +58,16 @@ class TestAuthService:
         # Should fail if we expect refresh
         decoded_user_id = auth_service.decode_token(token, expected_type="refresh")
         assert decoded_user_id is None
+
+    def test_decode_token_no_sub(self, auth_service: AuthService) -> None:
+        """Test decoding a JWT token without 'sub' claim."""
+        expire = datetime.now(UTC) + timedelta(minutes=10)
+        to_encode = {"exp": expire, "typ": "access"}  # No 'sub'
+        token = jwt.encode(
+            to_encode, auth_service.secret_key, algorithm=auth_service.algorithm
+        )
+
+        assert auth_service.decode_token(token) is None
 
     def test_create_refresh_token(self, auth_service: AuthService) -> None:
         """Test JWT refresh token creation."""
