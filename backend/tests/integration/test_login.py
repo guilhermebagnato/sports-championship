@@ -26,6 +26,7 @@ class TestUserLogin:
         assert response.status_code == 200
         data = response.json()
         assert "access_token" in data
+        assert "refresh_token" in data
         assert data["token_type"] == "bearer"
 
     @pytest.mark.asyncio
@@ -84,7 +85,16 @@ class TestUserLogin:
         )
 
         assert response.status_code == 200
-        token = response.json()["access_token"]
+        tokens = response.json()
+        access_token = tokens["access_token"]
+        refresh_token = tokens["refresh_token"]
 
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        assert payload["sub"] == test_user_in_db.id
+        # Validate access token
+        access_payload = jwt.decode(access_token, SECRET_KEY, algorithms=[ALGORITHM])
+        assert access_payload["sub"] == test_user_in_db.id
+        assert access_payload["typ"] == "access"
+
+        # Validate refresh token
+        refresh_payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
+        assert refresh_payload["sub"] == test_user_in_db.id
+        assert refresh_payload["typ"] == "refresh"

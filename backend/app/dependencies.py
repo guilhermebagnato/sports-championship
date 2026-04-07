@@ -6,7 +6,13 @@ from sqlmodel import Session
 from app.adapters.repositories import UserRepository
 from app.application.ports import IAuthService, IUserRepository
 from app.application.services import AuthService
-from app.auth import ACCESS_TOKEN_EXPIRE_MINUTES, ALGORITHM, SECRET_KEY, oauth2_scheme
+from app.auth import (
+    ACCESS_TOKEN_EXPIRE_MINUTES,
+    ALGORITHM,
+    REFRESH_TOKEN_EXPIRE_MINUTES,
+    SECRET_KEY,
+    oauth2_scheme,
+)
 from app.database import get_session
 from app.domain.entities import User as UserEntity
 
@@ -30,6 +36,7 @@ def get_auth_service() -> IAuthService:
         secret_key=SECRET_KEY,
         algorithm=ALGORITHM,
         expire_minutes=ACCESS_TOKEN_EXPIRE_MINUTES,
+        refresh_expire_minutes=REFRESH_TOKEN_EXPIRE_MINUTES,
     )
 
 

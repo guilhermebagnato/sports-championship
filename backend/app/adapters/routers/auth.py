@@ -4,7 +4,13 @@ from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException, status
 
-from app.adapters.schemas import LoginRequest, Token, UserCreate, UserPublic
+from app.adapters.schemas import (
+    LoginRequest,
+    Token,
+    TokenRefreshRequest,
+    UserCreate,
+    UserPublic,
+)
 from app.dependencies import AuthServiceDep, RepositoryDep
 from app.domain.entities import User as UserEntity
 
@@ -101,9 +107,51 @@ async def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    access_token = auth_service.create_access_token(user_id=user.id)
-    return Token(access_token=access_token)
+    access_token = auth_service.create_token(user_id=user.id, typ="access")
+    refresh_token = auth_service.create_token(user_id=user.id, typ="refresh")
+    return Token(access_token=access_token, refresh_token=refresh_token)
 
 
-# TODO: Implement in Phase 2
-# POST /refresh (refresh token)
+@router.post("/refresh", response_model=Token)
+async def refresh(
+    refresh_data: TokenRefreshRequest,
+    auth_service: AuthServiceDep,
+    repository: RepositoryDep,
+) -> Token:
+    """Refresh access token using a refresh token.
+
+    Args:
+        refresh_data: Refresh token data
+        auth_service: Service for token decoding and creation
+        repository: Repository for user retrieval
+
+    Returns:
+        Token with new access_token and existing refresh_token
+
+    Raises:
+        HTTPException 401: If refresh token is invalid or expired
+    """
+    user_id = auth_service.decode_token(
+        refresh_data.refresh_token, expected_type="refresh"
+    )
+    if user_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    user = await repository.get_by_id(user_id)
+    if user is None or not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found or disabled",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    access_token = auth_service.create_token(user_id=user.id, typ="access")
+    # We return the same refresh token as requested by the user ("Manter até expirar")
+    return Token(
+        access_token=access_token,
+        refresh_token=refresh_data.refresh_token,
+    )

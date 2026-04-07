@@ -29,10 +29,10 @@ class TestAuthService:
         is_valid = auth_service.verify_password(wrong_password, hashed)
         assert is_valid is False
 
-    def test_create_access_token(self, auth_service: AuthService) -> None:
+    def test_create_token(self, auth_service: AuthService) -> None:
         """Test JWT token creation."""
         user_id = "user-123"
-        token = auth_service.create_access_token(user_id)
+        token = auth_service.create_token(user_id)
 
         assert token is not None
         assert len(token) > 0
@@ -41,10 +41,37 @@ class TestAuthService:
     def test_decode_valid_token(self, auth_service: AuthService) -> None:
         """Test decoding a valid JWT token."""
         user_id = "user-123"
-        token = auth_service.create_access_token(user_id)
+        token = auth_service.create_token(user_id, typ="access")
 
+        # Should work with default (access)
         decoded_user_id = auth_service.decode_token(token)
         assert decoded_user_id == user_id
+
+        # Should fail if we expect refresh
+        decoded_user_id = auth_service.decode_token(token, expected_type="refresh")
+        assert decoded_user_id is None
+
+    def test_create_refresh_token(self, auth_service: AuthService) -> None:
+        """Test JWT refresh token creation."""
+        user_id = "user-123"
+        token = auth_service.create_token(user_id, typ="refresh")
+
+        assert token is not None
+        assert len(token) > 0
+        assert isinstance(token, str)
+
+    def test_decode_refresh_token(self, auth_service: AuthService) -> None:
+        """Test decoding a valid refresh token."""
+        user_id = "user-123"
+        token = auth_service.create_token(user_id, typ="refresh")
+
+        # Should work when expecting refresh
+        decoded_user_id = auth_service.decode_token(token, expected_type="refresh")
+        assert decoded_user_id == user_id
+
+        # Should fail if we expect access
+        decoded_user_id = auth_service.decode_token(token, expected_type="access")
+        assert decoded_user_id is None
 
     def test_decode_invalid_token(self, auth_service: AuthService) -> None:
         """Test decoding an invalid JWT token."""
@@ -57,7 +84,7 @@ class TestAuthService:
         """Test decoding an expired JWT token."""
         user_id = "user-123"
         # Create token with 0 minutes expiration (already expired)
-        token = auth_service.create_access_token(user_id, expires_delta=0)
+        token = auth_service.create_token(user_id, expires_delta=0)
 
         # Token might still decode if created just now, depends on timing
         # This is a basic test - real expiration testing is integration-level

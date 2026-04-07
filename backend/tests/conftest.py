@@ -65,6 +65,7 @@ def auth_service_fixture() -> AuthService:
         secret_key="test-secret-key",
         algorithm="HS256",
         expire_minutes=30,
+        refresh_expire_minutes=1440,
     )
 
 
@@ -97,4 +98,4 @@ async def test_user_in_db_fixture(
 @pytest.fixture(name="test_token")
 def test_token_fixture(auth_service: AuthService, test_user_entity: UserEntity) -> str:
     """Create a test JWT token."""
-    return auth_service.create_access_token(test_user_entity.id)
+    return auth_service.create_token(test_user_entity.id, token_type="access")

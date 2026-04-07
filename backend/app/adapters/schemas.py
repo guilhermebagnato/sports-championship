@@ -29,9 +29,10 @@ class UserInDB(UserPublic):
 
 
 class Token(BaseModel):
-    """DTO for JWT access token."""
+    """DTO for JWT access and refresh tokens."""
 
     access_token: str
+    refresh_token: str
     token_type: str = "bearer"
 
 
@@ -40,3 +41,9 @@ class LoginRequest(BaseModel):
 
     email: EmailStr
     password: str
+
+
+class TokenRefreshRequest(BaseModel):
+    """DTO for token refresh request."""
+
+    refresh_token: str

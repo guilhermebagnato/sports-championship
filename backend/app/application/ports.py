@@ -49,13 +49,19 @@ class IAuthService(ABC):
         pass
 
     @abstractmethod
-    def create_access_token(
-        self, user_id: str, expires_delta: int | None = None
+    def create_token(
+        self, user_id: str, typ: str = "access", expires_delta: int | None = None
     ) -> str:
-        """Create JWT access token for user."""
+        """Create JWT token for user.
+
+        Args:
+            user_id: User ID to encode in token
+            typ: Type of token ('access' or 'refresh')
+            expires_delta: Expiration time in minutes (overrides default if provided)
+        """
         pass
 
     @abstractmethod
-    def decode_token(self, token: str) -> str | None:
-        """Decode JWT token and return user_id if valid."""
+    def decode_token(self, token: str, expected_type: str = "access") -> str | None:
+        """Decode JWT token and return user_id if valid for the expected type."""
         pass

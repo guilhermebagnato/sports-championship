@@ -10,17 +10,25 @@ class AuthService(IAuthService):
     Encapsulates authentication use cases: token creation, password hashing, verification.
     """
 
-    def __init__(self, secret_key: str, algorithm: str, expire_minutes: int) -> None:
+    def __init__(
+        self,
+        secret_key: str,
+        algorithm: str,
+        expire_minutes: int,
+        refresh_expire_minutes: int,
+    ) -> None:
         """Initialize AuthService.
 
         Args:
             secret_key: JWT secret key
             algorithm: JWT algorithm (e.g., 'HS256')
-            expire_minutes: Token expiration time in minutes
+            expire_minutes: Access token expiration time in minutes
+            refresh_expire_minutes: Refresh token expiration time in minutes
         """
         self.secret_key = secret_key
         self.algorithm = algorithm
         self.expire_minutes = expire_minutes
+        self.refresh_expire_minutes = refresh_expire_minutes
 
     def hash_password(self, password: str) -> str:
         """Hash a plain text password using bcrypt via passlib.
@@ -54,14 +62,15 @@ class AuthService(IAuthService):
         except Exception:
             return False
 
-    def create_access_token(
-        self, user_id: str, expires_delta: int | None = None
+    def create_token(
+        self, user_id: str, typ: str = "access", expires_delta: int | None = None
     ) -> str:
-        """Create JWT access token for user.
+        """Create JWT token for user.
 
         Args:
             user_id: User ID to encode in token
-            expires_delta: Expiration time in minutes (uses default if None)
+            typ: Type of token ('access' or 'refresh')
+            expires_delta: Expiration time in minutes (overrides default if provided)
 
         Returns:
             JWT token string
@@ -71,19 +80,23 @@ class AuthService(IAuthService):
         from jose import jwt  # type: ignore[import-untyped]
 
         if expires_delta is None:
-            expires_delta = self.expire_minutes
+            if typ == "refresh":
+                expires_delta = self.refresh_expire_minutes
+            else:
+                expires_delta = self.expire_minutes
 
         expire = datetime.now(UTC) + timedelta(minutes=expires_delta)
-        to_encode = {"sub": user_id, "exp": expire}
+        to_encode = {"sub": user_id, "exp": expire, "typ": typ}
 
         encoded_jwt = jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
         return cast(str, encoded_jwt)
 
-    def decode_token(self, token: str) -> str | None:
-        """Decode JWT token and return user_id if valid.
+    def decode_token(self, token: str, expected_type: str = "access") -> str | None:
+        """Decode JWT token and return user_id if valid for the expected type.
 
         Args:
             token: JWT token to decode
+            expected_type: The expected 'typ' claim ('access' or 'refresh')
 
         Returns:
             User ID if token is valid, None otherwise
@@ -95,6 +108,12 @@ class AuthService(IAuthService):
             user_id: str = payload.get("sub")
             if user_id is None:
                 return None
+
+            # Validate token type
+            token_type = payload.get("typ")
+            if token_type != expected_type:
+                return None
+
             return user_id
         except Exception:
             return None
