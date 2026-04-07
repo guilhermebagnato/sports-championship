@@ -30,7 +30,7 @@ repos:
         language: system
         types: [python]
         pass_filenames: false
-        stages: [commit]
+        stages: [pre-commit]
 
   # Backend security via Makefile (bandit)
   - repo: local
@@ -42,4 +42,4 @@ repos:
         files: ^backend/app/
         types: [python]
         pass_filenames: false
-        stages: [commit]
+        stages: [pre-commit]
